@@ -1,0 +1,113 @@
+<p><a routerLink="/forms">&larr; Back to forms</a></p>
+
+@if (loading()) {
+  <p>Loading form…</p>
+}
+
+@if (loadError(); as error) {
+  <div class="error" role="alert">
+    <p>{{ error.message }}</p>
+    @if (error.kind !== 'notFound') {
+      <button type="button" (click)="reload()">Retry</button>
+    }
+  </div>
+}
+
+@if (form(); as form) {
+  <h2>{{ form.name }}</h2>
+  @if (isInvalid()) {
+    <div class="error" role="alert">
+      <p><strong>This form cannot be calculated.</strong> {{ form.error }}</p>
+      @if (form.cycle?.length) {
+        <p>
+          The fields marked as part of the circular dependency depend on each other, so their values can never be
+          determined. The form definition has to be fixed before it can be used.
+        </p>
+      }
+    </div>
+  } @else {
+    <p>Enter a value for each user field and click <strong>Calculate</strong> to see the calculated fields.</p>
+  }
+
+  <form [formGroup]="valuesForm()" (ngSubmit)="calculate()" novalidate>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Field</th>
+          <th scope="col">Type</th>
+          <th scope="col">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (field of form.fields; track field.name) {
+          @if (field.type === 'user') {
+            <tr>
+              <th scope="row">
+                <label [for]="'field-' + field.name">{{ field.name }}</label>
+              </th>
+              <td>User</td>
+              <td>
+                <input
+                  [id]="'field-' + field.name"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  [formControlName]="field.name"
+                  (input)="onValueChanged()"
+                  [attr.aria-invalid]="fieldErrors(field.name).length > 0"
+                  [attr.aria-describedby]="'field-' + field.name + '-errors'"
+                />
+                <div [id]="'field-' + field.name + '-errors'">
+                  @for (message of fieldErrors(field.name); track $index) {
+                    <div class="error">{{ message }}</div>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @else {
+            <tr>
+              <th scope="row">{{ field.name }}</th>
+              <td>
+                Calculated: {{ field.operands?.join(' + ') }}
+                @if (isInCycle(field.name)) {
+                  <span class="error">(part of the circular dependency)</span>
+                }
+              </td>
+              <td>
+                <output>{{ calculatedValue(field.name) ?? '—' }}</output>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+
+    @if (showValidationSummary()) {
+      <p class="error" role="alert">Please correct the highlighted fields before calculating.</p>
+    }
+
+    @if (calculationError(); as error) {
+      <div class="error" role="alert">
+        <p>{{ error.message }}</p>
+        @if (error.generalErrors.length > 0) {
+          <ul>
+            @for (message of error.generalErrors; track $index) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    @if (calculatedValues()) {
+      <p role="status">The form was calculated successfully.</p>
+    }
+
+    <p>
+      <button type="submit" [disabled]="calculating() || isInvalid()">
+        {{ calculating() ? 'Calculating…' : 'Calculate' }}
+      </button>
+      <button type="button" (click)="clear()" [disabled]="calculating() || isInvalid()">Clear</button>
+    </p>
+  </form>
+}

@@ -1,0 +1,61 @@
+@baseUrl = http://localhost:5080
+
+### List predefined forms
+GET {{baseUrl}}/api/forms
+Accept: application/json
+
+### Get Form 1 (fields needed to fill in the user fields)
+GET {{baseUrl}}/api/forms/1
+Accept: application/json
+
+### Complete Form 1
+POST {{baseUrl}}/api/forms/1/completions
+Content-Type: application/json
+
+{
+  "values": { "B": 1, "C": 2, "E": 3, "F": 4 }
+}
+
+### Complete Form 2
+POST {{baseUrl}}/api/forms/2/completions
+Content-Type: application/json
+
+{
+  "values": { "B": 1.5, "D": -2.25, "E": 10 }
+}
+
+### Form 3 has a circular dependency -> 200 with status "invalid", error and cycle
+GET {{baseUrl}}/api/forms/3
+Accept: application/json
+
+### Form 3 cannot be calculated -> 409
+POST {{baseUrl}}/api/forms/3/completions
+Content-Type: application/json
+
+{
+  "values": { "B": 1, "D": 2 }
+}
+
+### Invalid input: calculated field set, unknown field, missing user fields -> 400
+POST {{baseUrl}}/api/forms/1/completions
+Content-Type: application/json
+
+{
+  "values": { "A": 5, "B": 1, "Z": 2 }
+}
+
+### Malformed value -> 400
+POST {{baseUrl}}/api/forms/1/completions
+Content-Type: application/json
+
+{
+  "values": { "B": "one", "C": 2, "E": 3, "F": 4 }
+}
+
+### Unknown form -> 404
+POST {{baseUrl}}/api/forms/99/completions
+Content-Type: application/json
+
+{
+  "values": { "B": 1 }
+}

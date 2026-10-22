@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SimpleDocumentForm.Api/SimpleDocumentForm.Api.csproj" />
+  <Project Path="SimpleDocumentForm.Tests/SimpleDocumentForm.Tests.csproj" />
+  <Project Path="SimpleDocumentForm/SimpleDocumentForm.csproj" />
+</Solution>
